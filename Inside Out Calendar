@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      :root {
+        --bg: #ffffff;
+      }
+      body {
+        background-color: var(--bg);
+        color: #333;
+        font-family: -apple-system, system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+        margin: 0;
+      }
+
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        max-width: 900px;
+        padding: 20px;
+      }
+
+      .month-box {
+        background: #ffffff;
+        padding: 12px;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .month-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        border-color: #e0e0e0;
+      }
+
+      .month-name {
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: block;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .days-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 5px;
+      }
+
+      .sphere {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #f2f2f2;
+        cursor: pointer;
+        transition: 0.2s;
+        border: 1px solid rgba(0, 0, 0, 0.03);
+      }
+
+      .sphere:hover {
+        transform: scale(1.4);
+        z-index: 5;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+      }
+
+      #color-popover {
+        position: absolute;
+        display: none;
+        background: white;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 50px;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+        z-index: 100;
+      }
+
+      .color-option {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .color-option.active {
+        border-color: #333;
+        transform: scale(1.1);
+      }
+
+      .glow {
+        animation: pulse 2s infinite alternate;
+        box-shadow: 0 0 12px currentColor;
+      }
+
+      @keyframes pulse {
+        from {
+          filter: brightness(1);
+        }
+        to {
+          filter: brightness(1.25);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h3
+      style="
+        margin: 25px 0;
+        color: #222;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      "
+    >
+      2026 EMOTION CALENDAR
+    </h3>
+    <div class="calendar-grid" id="calendar"></div>
+    <div id="color-popover">
+      <div
+        class="color-option"
+        style="background: #ffd700"
+        data-color="#FFD700"
+      ></div>
+      <div
+        class="color-option"
+        style="background: #4169e1"
+        data-color="#4169E1"
+      ></div>
+      <div
+        class="color-option"
+        style="background: #ff4500"
+        data-color="#FF4500"
+      ></div>
+      <div
+        class="color-option"
+        style="background: #9370db"
+        data-color="#9370DB"
+      ></div>
+      <div
+        class="color-option"
+        style="background: #32cd32"
+        data-color="#32CD32"
+      ></div>
+      <div
+        class="color-option"
+        style="background: #ff69b4"
+        data-color="#FF69B4"
+      ></div>
+    </div>
+    <script>
+      const days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      const months = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const cal = document.getElementById("calendar");
+      const pop = document.getElementById("color-popover");
+      let sphereData =
+        JSON.parse(localStorage.getItem("emotionData_2026")) || {};
+      let activeId = null;
+
+      months.forEach((m, i) => {
+        const b = document.createElement("div");
+        b.className = "month-box";
+        b.innerHTML = `<span class="month-name">${m}</span>`;
+        const g = document.createElement("div");
+        g.className = "days-grid";
+        for (let d = 1; d <= days[i]; d++) {
+          const s = document.createElement("div");
+          s.className = "sphere";
+          const id = `m${i}-d${d}`;
+          s.id = id;
+          if (!sphereData[id]) sphereData[id] = [];
+          updateSphere(s, sphereData[id]);
+          s.onclick = (e) => {
+            activeId = id;
+            const r = s.getBoundingClientRect();
+            pop.style.display = "grid";
+            pop.style.top = `${r.top + window.scrollY - 60}px`;
+            pop.style.left = `${r.left + window.scrollX - 85}px`;
+            document
+              .querySelectorAll(".color-option")
+              .forEach((o) =>
+                o.classList.toggle(
+                  "active",
+                  sphereData[id].includes(o.dataset.color)
+                )
+              );
+            e.stopPropagation();
+          };
+          g.appendChild(s);
+        }
+        b.appendChild(g);
+        cal.appendChild(b);
+      });
+
+      document.querySelectorAll(".color-option").forEach((o) => {
+        o.onclick = (e) => {
+          e.stopPropagation();
+          const c = o.dataset.color;
+          sphereData[activeId] = sphereData[activeId].includes(c)
+            ? sphereData[activeId].filter((x) => x !== c)
+            : [...sphereData[activeId], c];
+          updateSphere(document.getElementById(activeId), sphereData[activeId]);
+          o.classList.toggle("active");
+          localStorage.setItem("emotionData_2026", JSON.stringify(sphereData));
+        };
+      });
+
+      function updateSphere(s, colors) {
+        s.style.background =
+          colors.length > 1
+            ? `linear-gradient(135deg, ${colors.join(",")})`
+            : colors[0] || "#f2f2f2";
+        s.classList.toggle("glow", colors.length > 0);
+        s.style.color = colors[0] || "transparent";
+      }
+      window.onclick = () => (pop.style.display = "none");
+    </script>
+  </body>
+</html>
