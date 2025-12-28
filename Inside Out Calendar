@@ -227,7 +227,7 @@
           localStorage.setItem("emotionData_2026", JSON.stringify(sphereData));
         };
       });
-
+ 
       function updateSphere(s, colors) {
         s.style.background =
           colors.length > 1
